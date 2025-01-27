@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <style>
+        /* Universal Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* The Infinite Pulse Background */
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff, #1e00ff);
+            background-size: 300% 300%;
+            animation: infinitePulse 12s ease infinite;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Keyframes for Infinity Pulse Animation */
+        @keyframes infinitePulse {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        /* Floating holographic container with depth effect */
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 600px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 30px;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transform-style: preserve-3d;
+            animation: floatEffect 6s ease-in-out infinite;
+        }
+
+        /* Float and Deep Space Effect */
+        @keyframes floatEffect {
+            0% { transform: rotateY(0deg) rotateX(0deg); }
+            50% { transform: rotateY(10deg) rotateX(10deg); }
+            100% { transform: rotateY(0deg) rotateX(0deg); }
+        }
+
+        /* The hypnotic glowing heading */
+        h1 {
+            font-size: 4em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            animation: glitchEffect 3s infinite alternate, neonGlow 1.5s ease-in-out infinite;
+            text-align: center;
+            color: transparent;
+        }
+
+        /* Glitch animation effect for the heading */
+        @keyframes glitchEffect {
+            0% {
+                text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.2), -2px -2px 5px rgba(255, 0, 255, 0.4);
+            }
+            50% {
+                text-shadow: -2px 2px 7px rgba(0, 255, 255, 0.6), 2px -2px 7px rgba(255, 0, 255, 0.6);
+            }
+            100% {
+                text-shadow: 4px 4px 10px rgba(0, 255, 255, 0.4), -4px -4px 10px rgba(255, 0, 255, 0.4);
+            }
+        }
+
+        /* Glowing effect for heading */
+        @keyframes neonGlow {
+            0% { text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
+            50% { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff; }
+            100% { text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
+        }
+
+        /* Input fields that react to hover like a hologram */
+        input, select, button {
+            width: 100%;
+            padding: 20px;
+            margin: 10px 0;
+            font-size: 1.3em;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(255, 0, 255, 0.5);
+            transition: all 0.3s ease-in-out;
+            backdrop-filter: blur(5px);
+            transform-origin: center;
+        }
+
+        /* Glowing effect on hover */
+        input:hover, select:hover, button:hover {
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.8), 0 0 80px rgba(255, 0, 255, 0.8);
+            transform: scale(1.05) rotate(5deg);
+        }
+
+        /* Hover Effect for Submit Button with Pulse */
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6), 0 0 50px rgba(255, 0, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            box-shadow: 0 0 100px rgba(255, 0, 255, 0.8), 0 0 150px rgba(0, 255, 255, 0.8);
+            animation: pulseButton 1s infinite alternate;
+        }
+
+        /* Button pulse effect */
+        @keyframes pulseButton {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.8); }
+            100% { transform: scale(1.1); box-shadow: 0 0 100px rgba(255, 0, 255, 1), 0 0 150px rgba(0, 255, 255, 1); }
+        }
+
+        /* Interactive Hover Glow for Input Fields */
+        input:focus, select:focus {
+            background: rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.7), 0 0 40px rgba(255, 0, 255, 0.7);
+            animation: glowingField 1s infinite alternate;
+        }
+
+        /* Glowing Effect for Inputs */
+        @keyframes glowingField {
+            0% { background: rgba(0, 255, 255, 0.15); box-shadow: 0 0 25px rgba(0, 255, 255, 0.5); }
+            100% { background: rgba(0, 255, 255, 0.25); box-shadow: 0 0 50px rgba(0, 255, 255, 1); }
+        }
+
+        /* Glitch effect for "Developed by OMI-KALIX" at the top */
+        .developer {
+            position: fixed;
+            top: 20px; /* Place it at the top of the page */
+            right: 20px; /* Place it on the right side */
+            width: auto;
+            text-align: center;
+            font-size: 2.5em;
+            color: transparent;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            animation: glitchEffectTop 3s infinite alternate;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        /* Glitch animation for top developer text */
+        @keyframes glitchEffectTop {
+            0% {
+                text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.2), -2px -2px 5px rgba(255, 0, 255, 0.4);
+            }
+            50% {
+                text-shadow: -2px 2px 7px rgba(0, 255, 255, 0.6), 2px -2px 7px rgba(255, 0, 255, 0.6);
+            }
+            100% {
+                text-shadow: 4px 4px 10px rgba(0, 255, 255, 0.4), -4px -4px 10px rgba(255, 0, 255, 0.4);
+            }
+        }
+
+        /* Mobile-Friendly Design */
+        @media (max-width: 768px) {
+            .wrapper {
+                width: 80%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 3em;
+            }
+
+            input, select, button {
+                font-size: 1.2em;
+                padding: 15px;
+            }
+        }
+
+        /* Particle Animation */
+        .particle {
+            position: absolute;
+            background-color: #00ffff;
+            border-radius: 50%;
+            animation: particleEffect 2s infinite ease-in-out;
+        }
+
+        @keyframes particleEffect {
+            0% { opacity: 0; transform: scale(0) translateX(0) translateY(0); }
+            100% { opacity: 1; transform: scale(1) translateX(100px) translateY(100px); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="wrapper">
+        <div class="form-container">
+            <h1 class="glitch">YouTube Video Downloader</h1>
+            <form action="/download" method="post">
+                <div class="input-group">
+                    <label for="url">YouTube URL:</label>
+                    <input type="text" id="url" name="url" required placeholder="Enter YouTube URL">
+                </div>
+
+                <div class="input-group">
+                    <label for="format">Select Format:</label>
+                    <select id="format" name="format">
+                        <option value="mp3">MP3</option>
+                        <option value="mp4">MP4</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="quality">Select Video Quality:</label>
+                    <select id="quality" name="quality">
+                        <option value="best">Best</option>
+                        <option value="144">144p</option>
+                        <option value="360">360p</option>
+                        <option value="720">720p</option>
+                        <option value="1080">1080p</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="audio_bitrate">Select MP3 Bitrate:</label>
+                    <select id="audio_bitrate" name="audio_bitrate">
+                        <option value="192">192k</option>
+                        <option value="256">256k</option>
+                        <option value="320">320k</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn">Download</button>
+            </form>
+        </div>
+    </div>
+    <div class="developer">Developed by OMI-KALIX</div>
+</body>
+</html>
