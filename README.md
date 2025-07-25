@@ -1,103 +1,40 @@
-YouTube Downloader Flask App
-This is a simple Flask app that allows users to download YouTube videos in various formats and qualities. The app supports both video and audio downloads, with the ability to select the audio bitrate when downloading in MP3 format.
+# 🎬 YouTube Video Downloader
 
-Features
-Video Download: Choose your preferred video quality and download YouTube videos.
-Audio Download: Download YouTube videos as MP3 files with adjustable audio bitrate.
-Easy-to-use Interface: A simple web interface where users can input a YouTube URL and choose the download options.
-Requirements
-Python 3.6+
-Flask
-yt-dlp
-FFmpeg (for audio processing)
-Installation
-Clone the repository:
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
+![PyTube](https://img.shields.io/badge/PyTube-15.0.0-red)
+![Tkinter](https://img.shields.io/badge/Tkinter-GUI-orange)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-bash
-Copy
-Edit
-git clone https://github.com/omi-kalix/project.git
-cd yt-downloader
-Create a virtual environment (optional but recommended):
+> A sleek Python application for downloading YouTube videos and audio in multiple resolutions with real-time progress tracking.
 
-bash
-Copy
-Edit
-python -m venv venv
-Activate the virtual environment:
+## ✨ Key Features
+- ✔️ **Multi-resolution Downloads** - 360p, 480p, 720p, 1080p
+- ✔️ **Audio Extraction** - Save as MP3 files
+- ✔️ **Real-time Progress** - Visual download tracking
+- ✔️ **Dual Interfaces** - GUI (Tkinter) and CLI versions
+- ✔️ **Custom Save Paths** - Choose download location
+- ✔️ **Error Handling** - Invalid URL detection and recovery
+- ✔️ **Cross-Platform** - Works on Windows, macOS, Linux
 
-On Windows:
-bash
-Copy
-Edit
-venv\Scripts\activate
-On macOS/Linux:
-bash
-Copy
-Edit
-source venv/bin/activate
-Install the required dependencies:
+## ⚙️ Project Structure
 
-bash
-Copy
-Edit
-pip install -r requirements.txt
-The requirements.txt file should contain:
+```
+video_downloader/
+├── main.py # GUI application entry point
+├── downloader.py # Core download logic
+├── utils.py # Helper functions
+├── requirements.txt # Dependencies
+└── README.md # Documentation
+```
 
-Copy
-Edit
-Flask
-yt-dlp
-Install FFmpeg:
+## 🚀 Getting Started
 
-Windows: Download from FFmpeg website and add it to your system path.
-macOS: Install via Homebrew:
-bash
-Copy
-Edit
-brew install ffmpeg
-Linux: Install via your package manager, e.g., on Ubuntu:
-bash
-Copy
-Edit
-sudo apt-get install ffmpeg
-Configure FFmpeg path (if necessary): If FFmpeg is installed in a custom location, make sure to update the ffmpeg_location in app.py:
+### 🔧 Requirements
+- Python 3.10+
+- Stable internet connection
 
-python
-Copy
-Edit
-options['ffmpeg_location'] = r'C:\ffmpeg\bin'  # Adjust this path as necessary
-Running the App
-Start the Flask server:
-
-bash
-Copy
-Edit
-python app.py
-Access the app in your browser:
-
-Open http://127.0.0.1:5000 in your web browser.
-Usage
-Enter a YouTube URL: Paste the URL of the YouTube video you want to download.
-Select Format: Choose between MP3 or Video.
-For MP3 downloads, you can adjust the Audio Bitrate.
-For video downloads, select the Video Quality (higher quality requires more bandwidth).
-Click Download: After entering the details, click the "Download" button to start the download process.
-Folder Structure
-php
-Copy
-Edit
-yt-downloader/
-├── app.py              # Main Flask app
-├── downloads/          # Folder where the downloaded files will be saved
-├── requirements.txt    # List of dependencies
-├── templates/
-│   └── index.html      # Frontend template for the app
-└── static/             # (Optional) Static files (e.g., CSS, JS)
-Troubleshooting
-Missing FFmpeg: Make sure FFmpeg is properly installed and accessible via the system path.
-Invalid URL: Ensure that the YouTube URL is valid and correctly formatted.
-Audio bitrate error: Ensure you enter a valid bitrate value (e.g., 128, 192, 256).
-License
-This project is open-source and available under the MIT License.
-
+### ⚙️ Installation
+1. Clone the repository:
+```bash
+git clone https://github.com/OMI-KALIX/video_downloader.git
+cd video_downloader
