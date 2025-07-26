@@ -101,7 +101,7 @@ Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 **OMKAR SAWANT**
 
-[![GitHub](https://img.shields.io/badge/GitHub-black?logo=github)](https://github.com/OMI-KALIX)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-blue?logo=github)](https://github.com/OMI-KALIX)
 
 
 Made with ❤️ by OMI-KALIX.
