@@ -37,30 +37,37 @@ def get_yt_dlp_options() -> Dict[str, Any]:
 
     import shutil
     import tempfile
+    try:
+        from .cookies import get_cookies_path
+    except ImportError:
+        from cookies import get_cookies_path
 
-    # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
-    cookie_paths = [
-        os.environ.get("COOKIES_FILE", ""),
-        os.environ.get("COOKIES_PATH", ""),
-        "/etc/secrets/youtube_cookies.txt",
-        "youtube_cookies.txt",
-        "cookies.txt",
-        "/app/cookies.txt"
-    ]
-    for path in cookie_paths:
-        if path and os.path.exists(path):
-            target_path = path
-            if not os.access(path, os.W_OK):
-                # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
-                writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
-                try:
-                    shutil.copyfile(path, writable_path)
-                    target_path = writable_path
-                except Exception as e:
-                    print(f"[yt-dlp probe] Warning copying read-only cookies file: {e}")
-            opts["cookiefile"] = target_path
-            print(f"[yt-dlp probe] Using cookiefile: {target_path} (source: {path})")
-            break
+    active_cookie = get_cookies_path()
+    if active_cookie:
+        opts["cookiefile"] = active_cookie
+    else:
+        # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
+        cookie_paths = [
+            os.environ.get("COOKIES_FILE", ""),
+            os.environ.get("COOKIES_PATH", ""),
+            "/etc/secrets/youtube_cookies.txt",
+            "youtube_cookies.txt",
+            "cookies.txt",
+            "/app/cookies.txt"
+        ]
+        for path in cookie_paths:
+            if path and os.path.exists(path):
+                target_path = path
+                if not os.access(path, os.W_OK):
+                    # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
+                    writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
+                    try:
+                        shutil.copyfile(path, writable_path)
+                        target_path = writable_path
+                    except Exception as e:
+                        print(f"[yt-dlp probe] Warning copying read-only cookies file: {e}")
+                opts["cookiefile"] = target_path
+                break
 
     proxy = os.environ.get("PROXY_URL")
     if proxy:

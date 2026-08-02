@@ -17,22 +17,31 @@ except ImportError:
 
 app = FastAPI(title="Media Downloader API", version="1.0.0")
 
+import shutil
 import tempfile
 import time
+from fastapi import Header
+
+try:
+    from .cookies import COOKIES_PATH, get_cookies_path, update_cookies, cookies_age_seconds
+except ImportError:
+    from cookies import COOKIES_PATH, get_cookies_path, update_cookies, cookies_age_seconds
+
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "secret-admin-token")
 
 @app.on_event("startup")
 def startup_cookies_log():
-    cookies_env = os.environ.get("COOKIES_FILE", "")
-    candidates = [
-        cookies_env,
-        os.environ.get("COOKIES_PATH", ""),
-        "/etc/secrets/youtube_cookies.txt",
-        "youtube_cookies.txt",
-        "cookies.txt",
-        "/app/cookies.txt"
-    ]
-    found = next((p for p in candidates if p and os.path.exists(p)), None)
-    print(f"[startup] COOKIES_FILE env='{cookies_env}', active_file='{found}', exists={bool(found)}")
+    # Seed active cookies from Secret File or environment if active cookies do not exist
+    seed_file = os.environ.get("COOKIES_FILE", "/etc/secrets/youtube_cookies.txt")
+    if not get_cookies_path() and seed_file and os.path.exists(seed_file):
+        try:
+            shutil.copyfile(seed_file, COOKIES_PATH)
+            print(f"[startup] Seeded active cookies from {seed_file}")
+        except Exception as e:
+            print(f"[startup seed error] {e}")
+
+    active = get_cookies_path()
+    print(f"[startup] Active cookies file: '{active}', exists={bool(active)}")
 
     # Clean up orphaned temporary files older than 1 hour from temp directory
     try:
@@ -68,24 +77,29 @@ class DownloadRequest(BaseModel):
     quality: str = "720"      # 1080 | 720 | 480 | 360
     bitrate: str = "192"      # 320 | 256 | 192 | 128
 
+class RefreshCookiesRequest(BaseModel):
+    content: str
+
 @app.get("/healthz")
 def healthz():
-    cookies_env = os.environ.get("COOKIES_FILE", "")
-    candidates = [
-        cookies_env,
-        os.environ.get("COOKIES_PATH", ""),
-        "/etc/secrets/youtube_cookies.txt",
-        "youtube_cookies.txt",
-        "cookies.txt",
-        "/app/cookies.txt"
-    ]
-    found = next((p for p in candidates if p and os.path.exists(p)), None)
+    age = cookies_age_seconds()
     return {
         "status": "ok",
-        "cookies_env": cookies_env,
-        "active_cookie_file": found,
-        "cookies_exist": bool(found),
+        "cookies_present": age is not None,
+        "cookies_age_hours": round(age / 3600, 1) if age is not None else None,
+        "cookies_stale": age is not None and age > (60 * 60 * 24 * 10),  # >10 days
+        "active_cookie_file": get_cookies_path(),
     }
+
+@app.post("/admin/cookies")
+def refresh_cookies(req: RefreshCookiesRequest, x_admin_token: str = Header(...)):
+    if x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid Admin Token")
+    content = req.content.strip()
+    if not content or "youtube.com" not in content:
+        raise HTTPException(status_code=400, detail="Invalid cookies.txt content (must contain youtube.com)")
+    meta = update_cookies(content)
+    return {"status": "updated", **meta}
 
 @app.post("/api/probe")
 def probe_endpoint(req: ProbeRequest):
