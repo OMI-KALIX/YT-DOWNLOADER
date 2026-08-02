@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 from typing import Dict, Any
 from yt_dlp import YoutubeDL
 try:
@@ -12,9 +13,16 @@ SYSTEM_TEMP = tempfile.gettempdir()
 DOWNLOAD_DIR = os.path.join(SYSTEM_TEMP, "yt_downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-MAX_DURATION_SECONDS = 120 * 60  # 2 hour cap to survive 512MB RAM free tier limits
+MAX_DURATION_SECONDS = 30 * 60  # 30 minute cap to survive 512MB RAM free tier limits
 
-def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrate: str):
+def friendly_error(msg: str) -> str:
+    if "Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg:
+        return "YouTube anti-bot verification triggered. Please try again in a few moments or ensure cookies.txt is updated."
+    if "Video unavailable" in msg:
+        return "This video is unavailable or private."
+    return msg
+
+def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrate: str, _retry: bool = False):
     job = JOBS.get(job_id)
     if not job:
         return
@@ -47,6 +55,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         }
     }
 
+    # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
     cookie_paths = [
         os.environ.get("COOKIES_FILE", ""),
         os.environ.get("COOKIES_PATH", ""),
@@ -76,7 +85,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
             "preferredquality": bitrate,
         }]
     else:
-        # Match user's format selection logic: bestvideo[height<=quality]+bestaudio/best merged to mp4
+        # Match format selection logic: bestvideo[height<=quality]+bestaudio/best merged to mp4
         options["format"] = f"bestvideo[height<={quality}]+bestaudio/best"
         options["merge_output_format"] = "mp4"
 
@@ -124,5 +133,9 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
                     job.error = "Output file not found after processing."
 
     except Exception as e:
+        msg = str(e)
+        if ("Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg) and not _retry:
+            time.sleep(3)
+            return run_download(job_id, url, format_choice, quality, bitrate, _retry=True)
         job.status = "error"
-        job.error = str(e)
+        job.error = friendly_error(msg)

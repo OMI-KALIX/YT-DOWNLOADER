@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Dict, Any, Optional
 from yt_dlp import YoutubeDL
 
@@ -11,6 +12,13 @@ def is_valid_url(url_str: str) -> bool:
         return parsed.hostname in ALLOWED_HOSTS if parsed.hostname else False
     except Exception:
         return False
+
+def friendly_error(msg: str) -> str:
+    if "Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg:
+        return "YouTube anti-bot verification triggered. Please try again shortly or upload valid youtube_cookies.txt."
+    if "Video unavailable" in msg:
+        return "This video is unavailable or private."
+    return msg
 
 def get_yt_dlp_options() -> Dict[str, Any]:
     opts: Dict[str, Any] = {
@@ -45,7 +53,7 @@ def get_yt_dlp_options() -> Dict[str, Any]:
 
     return opts
 
-def probe_video(url: str) -> Optional[Dict[str, Any]]:
+def probe_video(url: str, _retry: bool = False) -> Optional[Dict[str, Any]]:
     options = get_yt_dlp_options()
     
     try:
@@ -75,4 +83,8 @@ def probe_video(url: str) -> Optional[Dict[str, Any]]:
                 "is_too_long": duration > (30 * 60)
             }
     except Exception as e:
-        raise ValueError(f"Failed to probe URL: {str(e)}")
+        msg = str(e)
+        if ("Sign in to confirm" in msg or "not a bot" in msg) and not _retry:
+            time.sleep(2)
+            return probe_video(url, _retry=True)
+        raise ValueError(friendly_error(msg))
