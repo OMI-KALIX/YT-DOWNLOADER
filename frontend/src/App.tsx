@@ -272,6 +272,8 @@ export default function App() {
                   onChange={(e) => setQuality(e.target.value)}
                   className="w-full rounded-xl bg-neutral-950 border border-neutral-800 px-3 py-2.5 text-xs text-neutral-200 focus:outline-none focus:border-emerald-500"
                 >
+                  <option value="2160">2160p (4K Ultra HD)</option>
+                  <option value="1440">1440p (2K Quad HD)</option>
                   <option value="1080">1080p (Full HD)</option>
                   <option value="720">720p (HD)</option>
                   <option value="480">480p (SD)</option>
