@@ -34,6 +34,16 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         }
     }
 
+    # Ultimate Solution 1: Google OAuth2 Device Token Authentication (no cookies needed)
+    if os.environ.get("ENABLE_OAUTH2", "").lower() in ("true", "1", "yes"):
+        opts["username"] = "oauth2"
+        opts["password"] = ""
+
+    # Ultimate Solution 2: Proof-of-Origin (PO) Token Support
+    po_token = os.environ.get("PO_TOKEN")
+    if po_token:
+        opts["extractor_args"]["youtube"]["po_token"] = [f"web+{po_token}"]
+
     import shutil
     import tempfile
     try:
