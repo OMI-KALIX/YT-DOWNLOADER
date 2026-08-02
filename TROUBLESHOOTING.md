@@ -34,12 +34,15 @@ curl -X POST https://your-service.onrender.com/admin/cookies \
 
 ## 3. Initial Setup & Exporting Cookies
 
-### Step 1: Export Netscape-Format `youtube_cookies.txt`
+### Step 1: Export Non-Rotating Cookies (Official yt-dlp Wiki Trick)
 
-1. Install the free browser extension **[Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)** (or use Firefox/Edge equivalents).
-2. Open **[YouTube.com](https://www.youtube.com)** while logged into your YouTube account.
-3. Click the extension icon and select **Export cookies for this domain**.
+> 💡 **Why normal cookies expire quickly**: YouTube automatically rotates session cookies (`SIDCC`, `LOGIN_INFO`) on open browser tabs. To export cookies that **NEVER rotate or expire**, follow the official `yt-dlp` wiki method:
+
+1. Open a **new Private Browsing / Incognito window** and log into YouTube.
+2. In that **same tab**, navigate to `https://www.youtube.com/robots.txt` (this stops YouTube scripts from running in the background and rotating your cookies).
+3. Export your cookies using the **[Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)** extension.
 4. Save the file as **`youtube_cookies.txt`**.
+5. **Immediately close the Private/Incognito window** so the session is never opened in your browser again!
 
 ### Step 2: Configure Render Secret Files & Environment Variables
 
