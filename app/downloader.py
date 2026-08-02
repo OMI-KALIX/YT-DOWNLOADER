@@ -15,8 +15,13 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 MAX_DURATION_SECONDS = 30 * 60  # 30 minute cap to survive 512MB RAM free tier limits
 
-def friendly_error(msg: str) -> str:
+def friendly_error(msg: str, job_id: str = "") -> str:
     if "Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg:
+        try:
+            from .alerting import alert_cookie_failure
+        except ImportError:
+            from alerting import alert_cookie_failure
+        alert_cookie_failure(job_id, msg)
         return "YouTube anti-bot verification triggered. Please try again in a few moments or ensure cookies.txt is updated."
     if "Video unavailable" in msg:
         return "This video is unavailable or private."
@@ -84,30 +89,37 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
     }
 
     import shutil
+    try:
+        from .cookies import get_cookies_path
+    except ImportError:
+        from cookies import get_cookies_path
 
-    # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
-    cookie_paths = [
-        os.environ.get("COOKIES_FILE", ""),
-        os.environ.get("COOKIES_PATH", ""),
-        "/etc/secrets/youtube_cookies.txt",
-        "youtube_cookies.txt",
-        "cookies.txt",
-        "/app/cookies.txt"
-    ]
-    for path in cookie_paths:
-        if path and os.path.exists(path):
-            target_path = path
-            if not os.access(path, os.W_OK):
-                # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
-                writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
-                try:
-                    shutil.copyfile(path, writable_path)
-                    target_path = writable_path
-                except Exception as e:
-                    print(f"[yt-dlp download] Warning copying read-only cookies file: {e}")
-            options["cookiefile"] = target_path
-            print(f"[yt-dlp download] Using cookiefile: {target_path} (source: {path})")
-            break
+    active_cookie = get_cookies_path()
+    if active_cookie:
+        options["cookiefile"] = active_cookie
+    else:
+        # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
+        cookie_paths = [
+            os.environ.get("COOKIES_FILE", ""),
+            os.environ.get("COOKIES_PATH", ""),
+            "/etc/secrets/youtube_cookies.txt",
+            "youtube_cookies.txt",
+            "cookies.txt",
+            "/app/cookies.txt"
+        ]
+        for path in cookie_paths:
+            if path and os.path.exists(path):
+                target_path = path
+                if not os.access(path, os.W_OK):
+                    # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
+                    writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
+                    try:
+                        shutil.copyfile(path, writable_path)
+                        target_path = writable_path
+                    except Exception as e:
+                        print(f"[yt-dlp download] Warning copying read-only cookies file: {e}")
+                options["cookiefile"] = target_path
+                break
 
     proxy = os.environ.get("PROXY_URL")
     if proxy:

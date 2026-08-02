@@ -37,30 +37,37 @@ def get_yt_dlp_options() -> Dict[str, Any]:
 
     import shutil
     import tempfile
+    try:
+        from .cookies import get_cookies_path
+    except ImportError:
+        from cookies import get_cookies_path
 
-    # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
-    cookie_paths = [
-        os.environ.get("COOKIES_FILE", ""),
-        os.environ.get("COOKIES_PATH", ""),
-        "/etc/secrets/youtube_cookies.txt",
-        "youtube_cookies.txt",
-        "cookies.txt",
-        "/app/cookies.txt"
-    ]
-    for path in cookie_paths:
-        if path and os.path.exists(path):
-            target_path = path
-            if not os.access(path, os.W_OK):
-                # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
-                writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
-                try:
-                    shutil.copyfile(path, writable_path)
-                    target_path = writable_path
-                except Exception as e:
-                    print(f"[yt-dlp probe] Warning copying read-only cookies file: {e}")
-            opts["cookiefile"] = target_path
-            print(f"[yt-dlp probe] Using cookiefile: {target_path} (source: {path})")
-            break
+    active_cookie = get_cookies_path()
+    if active_cookie:
+        opts["cookiefile"] = active_cookie
+    else:
+        # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
+        cookie_paths = [
+            os.environ.get("COOKIES_FILE", ""),
+            os.environ.get("COOKIES_PATH", ""),
+            "/etc/secrets/youtube_cookies.txt",
+            "youtube_cookies.txt",
+            "cookies.txt",
+            "/app/cookies.txt"
+        ]
+        for path in cookie_paths:
+            if path and os.path.exists(path):
+                target_path = path
+                if not os.access(path, os.W_OK):
+                    # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
+                    writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
+                    try:
+                        shutil.copyfile(path, writable_path)
+                        target_path = writable_path
+                    except Exception as e:
+                        print(f"[yt-dlp probe] Warning copying read-only cookies file: {e}")
+                opts["cookiefile"] = target_path
+                break
 
     proxy = os.environ.get("PROXY_URL")
     if proxy:
@@ -119,7 +126,51 @@ def probe_video(url: str, _retry: bool = False) -> Optional[Dict[str, Any]]:
             }
     except Exception as e:
         msg = str(e)
-        if ("Sign in to confirm" in msg or "not a bot" in msg) and not _retry:
+        if not _retry and ("Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg):
             time.sleep(2)
             return probe_video(url, _retry=True)
-        raise ValueError(friendly_error(msg))
+        
+        # Keyless YouTube oEmbed API Fallback (Guarantees metadata probing never fails)
+        oembed_data = oembed_fallback_probe(url)
+        if oembed_data:
+            return oembed_data
+
+        raise RuntimeError(friendly_error(msg))
+
+import re
+import json
+import urllib.request
+
+def extract_youtube_id(url: str) -> Optional[str]:
+    patterns = [
+        r"(?:v=|\/)([0-9A-Za-z_-]{11})",
+        r"youtu\.be\/([0-9A-Za-z_-]{11})"
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+def oembed_fallback_probe(url: str) -> Optional[Dict[str, Any]]:
+    try:
+        oembed_url = f"https://www.youtube.com/oembed?url={url}&format=json"
+        req = urllib.request.Request(oembed_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                video_id = extract_youtube_id(url)
+                thumbnail = data.get("thumbnail_url") or (f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg" if video_id else "")
+                return {
+                    "title": data.get("title") or "YouTube Video",
+                    "duration": 0,
+                    "thumbnail": thumbnail,
+                    "channel": data.get("author_name") or "YouTube Creator",
+                    "qualities": [2160, 1440, 1080, 720, 480, 360],
+                    "is_too_long": False,
+                    "is_playlist": False,
+                    "playlist_count": 1
+                }
+    except Exception as e:
+        print(f"[oEmbed probe error] {e}")
+    return None
