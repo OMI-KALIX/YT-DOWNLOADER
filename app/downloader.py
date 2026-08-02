@@ -67,6 +67,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
     for path in cookie_paths:
         if path and os.path.exists(path):
             options["cookiefile"] = path
+            print(f"[yt-dlp download] Using cookiefile: {path}")
             break
 
     proxy = os.environ.get("PROXY_URL")

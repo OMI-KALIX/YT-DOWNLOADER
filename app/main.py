@@ -17,6 +17,20 @@ except ImportError:
 
 app = FastAPI(title="Media Downloader API", version="1.0.0")
 
+@app.on_event("startup")
+def startup_cookies_log():
+    cookies_env = os.environ.get("COOKIES_FILE", "")
+    candidates = [
+        cookies_env,
+        os.environ.get("COOKIES_PATH", ""),
+        "/etc/secrets/youtube_cookies.txt",
+        "youtube_cookies.txt",
+        "cookies.txt",
+        "/app/cookies.txt"
+    ]
+    found = next((p for p in candidates if p and os.path.exists(p)), None)
+    print(f"[startup] COOKIES_FILE env='{cookies_env}', active_file='{found}', exists={bool(found)}")
+
 # Enable CORS for development
 app.add_middleware(
     CORSMiddleware,

@@ -45,6 +45,7 @@ def get_yt_dlp_options() -> Dict[str, Any]:
     for path in cookie_paths:
         if path and os.path.exists(path):
             opts["cookiefile"] = path
+            print(f"[yt-dlp probe] Using cookiefile: {path}")
             break
 
     proxy = os.environ.get("PROXY_URL")
