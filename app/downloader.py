@@ -40,7 +40,18 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
+            }
+        }
     }
+
+    cookie_paths = ["cookies.txt", "/app/cookies.txt", os.environ.get("COOKIES_PATH", "")]
+    for path in cookie_paths:
+        if path and os.path.exists(path):
+            options["cookiefile"] = path
+            break
 
     if format_choice == "mp3":
         options["format"] = f"bestaudio[abr<={bitrate}]/bestaudio/best"
@@ -54,9 +65,11 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         options["format"] = f"bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={quality}]+bestaudio/best"
         options["merge_output_format"] = "mp4"
 
+    probe_opts = {k: v for k, v in options.items() if k not in ("progress_hooks", "outtmpl", "format", "postprocessors", "merge_output_format")}
+
     try:
         # Pre-check info for duration limit
-        with YoutubeDL({"noplaylist": True, "quiet": True}) as probe_ydl:
+        with YoutubeDL(probe_opts) as probe_ydl:
             info_meta = probe_ydl.extract_info(url, download=False)
             if info_meta:
                 duration = info_meta.get("duration", 0) or 0

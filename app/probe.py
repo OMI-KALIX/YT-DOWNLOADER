@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Any, Optional
 from yt_dlp import YoutubeDL
 
@@ -11,13 +12,29 @@ def is_valid_url(url_str: str) -> bool:
     except Exception:
         return False
 
-def probe_video(url: str) -> Optional[Dict[str, Any]]:
-    options = {
+def get_yt_dlp_options() -> Dict[str, Any]:
+    opts: Dict[str, Any] = {
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
+            }
+        }
     }
+
+    cookie_paths = ["cookies.txt", "/app/cookies.txt", os.environ.get("COOKIES_PATH", "")]
+    for path in cookie_paths:
+        if path and os.path.exists(path):
+            opts["cookiefile"] = path
+            break
+
+    return opts
+
+def probe_video(url: str) -> Optional[Dict[str, Any]]:
+    options = get_yt_dlp_options()
     
     try:
         with YoutubeDL(options) as ydl:
