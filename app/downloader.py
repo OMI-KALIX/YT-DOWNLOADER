@@ -23,8 +23,10 @@ def friendly_error(msg: str, job_id: str = "") -> str:
             from alerting import alert_cookie_failure
         alert_cookie_failure(job_id, msg)
         return "YouTube anti-bot verification triggered. Please try again in a few moments or ensure cookies.txt is updated."
-    if "Video unavailable" in msg:
-        return "This video is unavailable or private."
+    if "Video unavailable" in msg or "private" in msg.lower() or "Requested format" in msg:
+        return "This video is unavailable, deleted, or private."
+    if "setdefault" in msg:
+        return "Video stream format unavailable or restricted by YouTube."
     return msg
 
 def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrate: str, _retry: bool = False):
@@ -68,7 +70,6 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "quiet": True,
         "no_warnings": True,
         "ignoreerrors": True,
-        "js_runtimes": {"node": {}, "deno": {}},
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {

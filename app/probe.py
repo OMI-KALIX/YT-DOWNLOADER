@@ -16,8 +16,8 @@ def is_valid_url(url_str: str) -> bool:
 def friendly_error(msg: str) -> str:
     if "Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg:
         return "YouTube anti-bot verification triggered. Please try again shortly or upload valid youtube_cookies.txt."
-    if "Video unavailable" in msg:
-        return "This video is unavailable or private."
+    if "Video unavailable" in msg or "private" in msg.lower() or "Requested format" in msg:
+        return "This video is unavailable, deleted, or private."
     return msg
 
 def get_yt_dlp_options() -> Dict[str, Any]:
@@ -26,7 +26,6 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        "js_runtimes": {"node": {}, "deno": {}},
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {
