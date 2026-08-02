@@ -89,6 +89,16 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "socket_timeout": 30,
     }
 
+    # Ultimate Solution 1: Google OAuth2 Device Token Authentication (no cookies needed)
+    if os.environ.get("ENABLE_OAUTH2", "").lower() in ("true", "1", "yes"):
+        options["username"] = "oauth2"
+        options["password"] = ""
+
+    # Ultimate Solution 2: Proof-of-Origin (PO) Token Support
+    po_token = os.environ.get("PO_TOKEN")
+    if po_token:
+        options["extractor_args"]["youtube"]["po_token"] = [f"web+{po_token}"]
+
     import shutil
     try:
         from .cookies import get_cookies_path
