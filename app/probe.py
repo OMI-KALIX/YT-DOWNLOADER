@@ -25,11 +25,23 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         }
     }
 
-    cookie_paths = ["cookies.txt", "/app/cookies.txt", os.environ.get("COOKIES_PATH", "")]
+    # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
+    cookie_paths = [
+        os.environ.get("COOKIES_FILE", ""),
+        os.environ.get("COOKIES_PATH", ""),
+        "/etc/secrets/youtube_cookies.txt",
+        "youtube_cookies.txt",
+        "cookies.txt",
+        "/app/cookies.txt"
+    ]
     for path in cookie_paths:
         if path and os.path.exists(path):
             opts["cookiefile"] = path
             break
+
+    proxy = os.environ.get("PROXY_URL")
+    if proxy:
+        opts["proxy"] = proxy
 
     return opts
 

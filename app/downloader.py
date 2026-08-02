@@ -47,11 +47,22 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         }
     }
 
-    cookie_paths = ["cookies.txt", "/app/cookies.txt", os.environ.get("COOKIES_PATH", "")]
+    cookie_paths = [
+        os.environ.get("COOKIES_FILE", ""),
+        os.environ.get("COOKIES_PATH", ""),
+        "/etc/secrets/youtube_cookies.txt",
+        "youtube_cookies.txt",
+        "cookies.txt",
+        "/app/cookies.txt"
+    ]
     for path in cookie_paths:
         if path and os.path.exists(path):
             options["cookiefile"] = path
             break
+
+    proxy = os.environ.get("PROXY_URL")
+    if proxy:
+        options["proxy"] = proxy
 
     ffmpeg_loc = os.environ.get("FFMPEG_LOCATION")
     if ffmpeg_loc:
