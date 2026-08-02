@@ -26,11 +26,8 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android", "web"]
-            }
-        }
+        "js_runtimes": {"node": {}, "deno": {}},
+        "format_sort": ["res", "fps", "vbr"]
     }
 
     # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files

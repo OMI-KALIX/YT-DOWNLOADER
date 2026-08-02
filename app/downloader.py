@@ -48,11 +48,8 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android", "web"]
-            }
-        }
+        "js_runtimes": {"node": {}, "deno": {}},
+        "format_sort": ["res", "fps", "vbr"]
     }
 
     # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
