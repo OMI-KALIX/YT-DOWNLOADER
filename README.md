@@ -93,6 +93,12 @@ Render will build the Docker container and deploy the service on the free tier.
 
 ---
 
+## 🛠️ Troubleshooting & Anti-Bot Setup
+
+For detailed step-by-step instructions on resolving YouTube bot verification (`Sign in to confirm you're not a bot`) and Render read-only cookie mount issues (`[Errno 30]`), see **[TROUBLESHOOTING.md](file:///c:/Users/omusa/Downloads/YT-DOWNLOADER/TROUBLESHOOTING.md)**.
+
+---
+
 ## 🛡️ License & Educational Notice
 
 Distributed under the **MIT License**.
