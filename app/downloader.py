@@ -52,6 +52,8 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "format_sort": ["res", "fps", "vbr"]
     }
 
+    import shutil
+
     # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
     cookie_paths = [
         os.environ.get("COOKIES_FILE", ""),
@@ -63,8 +65,17 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
     ]
     for path in cookie_paths:
         if path and os.path.exists(path):
-            options["cookiefile"] = path
-            print(f"[yt-dlp download] Using cookiefile: {path}")
+            target_path = path
+            if not os.access(path, os.W_OK):
+                # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
+                writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
+                try:
+                    shutil.copyfile(path, writable_path)
+                    target_path = writable_path
+                except Exception as e:
+                    print(f"[yt-dlp download] Warning copying read-only cookies file: {e}")
+            options["cookiefile"] = target_path
+            print(f"[yt-dlp download] Using cookiefile: {target_path} (source: {path})")
             break
 
     proxy = os.environ.get("PROXY_URL")

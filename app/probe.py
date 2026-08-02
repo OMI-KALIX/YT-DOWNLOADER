@@ -30,6 +30,9 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         "format_sort": ["res", "fps", "vbr"]
     }
 
+    import shutil
+    import tempfile
+
     # Support COOKIES_FILE env var, Render Secret Files (/etc/secrets/youtube_cookies.txt), or local files
     cookie_paths = [
         os.environ.get("COOKIES_FILE", ""),
@@ -41,8 +44,17 @@ def get_yt_dlp_options() -> Dict[str, Any]:
     ]
     for path in cookie_paths:
         if path and os.path.exists(path):
-            opts["cookiefile"] = path
-            print(f"[yt-dlp probe] Using cookiefile: {path}")
+            target_path = path
+            if not os.access(path, os.W_OK):
+                # Copy from read-only mount (Render /etc/secrets/) to writable temp directory
+                writable_path = os.path.join(tempfile.gettempdir(), "active_youtube_cookies.txt")
+                try:
+                    shutil.copyfile(path, writable_path)
+                    target_path = writable_path
+                except Exception as e:
+                    print(f"[yt-dlp probe] Warning copying read-only cookies file: {e}")
+            opts["cookiefile"] = target_path
+            print(f"[yt-dlp probe] Using cookiefile: {target_path} (source: {path})")
             break
 
     proxy = os.environ.get("PROXY_URL")
