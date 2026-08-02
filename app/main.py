@@ -51,7 +51,22 @@ class DownloadRequest(BaseModel):
 
 @app.get("/healthz")
 def healthz():
-    return {"status": "ok"}
+    cookies_env = os.environ.get("COOKIES_FILE", "")
+    candidates = [
+        cookies_env,
+        os.environ.get("COOKIES_PATH", ""),
+        "/etc/secrets/youtube_cookies.txt",
+        "youtube_cookies.txt",
+        "cookies.txt",
+        "/app/cookies.txt"
+    ]
+    found = next((p for p in candidates if p and os.path.exists(p)), None)
+    return {
+        "status": "ok",
+        "cookies_env": cookies_env,
+        "active_cookie_file": found,
+        "cookies_exist": bool(found),
+    }
 
 @app.post("/api/probe")
 def probe_endpoint(req: ProbeRequest):
