@@ -73,7 +73,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {
-                "player_client": ["mweb", "android_vr", "web_embedded", "android", "web"]
+                "player_client": ["web_safari", "mweb", "android_vr", "web_embedded", "android", "web"]
             }
         },
         # Resumable Download Strategy (Native yt-dlp resume & partial file protection)
@@ -141,7 +141,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         options["ffmpeg_location"] = ffmpeg_loc
 
     if format_choice == "mp3":
-        options["format"] = f"bestaudio[abr<={bitrate}]/bestaudio/best"
+        options["format"] = "bestaudio/best"
         options["postprocessors"] = [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -155,7 +155,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         if quality == "best" or quality == "2160":
             options["format"] = "bestvideo+bestaudio/best"
         else:
-            options["format"] = f"bestvideo[height<={quality}]+bestaudio/best"
+            options["format"] = f"bestvideo[height<={quality}]+bestaudio/bestvideo+bestaudio/best"
         options["merge_output_format"] = "mp4"
         options["postprocessor_args"] = {
             "ffmpeg": ["-threads", "2", "-movflags", "+faststart"]
