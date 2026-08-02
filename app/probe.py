@@ -26,6 +26,7 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
+        "remote_components": ["ejs:github", "ejs:npm"],
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {

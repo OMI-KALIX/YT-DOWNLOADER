@@ -70,6 +70,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "quiet": True,
         "no_warnings": True,
         "ignoreerrors": True,
+        "remote_components": ["ejs:github", "ejs:npm"],
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {
