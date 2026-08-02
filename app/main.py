@@ -17,6 +17,9 @@ except ImportError:
 
 app = FastAPI(title="Media Downloader API", version="1.0.0")
 
+import tempfile
+import time
+
 @app.on_event("startup")
 def startup_cookies_log():
     cookies_env = os.environ.get("COOKIES_FILE", "")
@@ -30,6 +33,22 @@ def startup_cookies_log():
     ]
     found = next((p for p in candidates if p and os.path.exists(p)), None)
     print(f"[startup] COOKIES_FILE env='{cookies_env}', active_file='{found}', exists={bool(found)}")
+
+    # Clean up orphaned temporary files older than 1 hour from temp directory
+    try:
+        temp_dir = os.path.join(tempfile.gettempdir(), "yt_downloads")
+        if os.path.exists(temp_dir):
+            now = time.time()
+            for f in os.listdir(temp_dir):
+                file_path = os.path.join(temp_dir, f)
+                if os.path.isfile(file_path) and (now - os.path.getmtime(file_path)) > 3600:
+                    try:
+                        os.remove(file_path)
+                        print(f"[cleanup] Removed orphaned temp file: {f}")
+                    except Exception:
+                        pass
+    except Exception as e:
+        print(f"[startup cleanup error] {e}")
 
 # Enable CORS for development
 app.add_middleware(
@@ -105,6 +124,10 @@ def job_status(job_id: str):
         "duration": job.duration,
         "format": job.format,
         "quality": job.quality,
+        "is_playlist": job.is_playlist,
+        "playlist_index": job.playlist_index,
+        "playlist_count": job.playlist_count,
+        "current_video_title": job.current_video_title,
         "has_file": bool(job.filepath and os.path.exists(job.filepath))
     }
 

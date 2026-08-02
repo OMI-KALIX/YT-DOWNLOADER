@@ -31,25 +31,51 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
     job.progress = 0.0
 
     def hook(d: Dict[str, Any]):
+        info = d.get("info_dict", {})
+        if info:
+            if info.get("playlist_index"):
+                job.is_playlist = True
+                job.playlist_index = info.get("playlist_index")
+                job.playlist_count = info.get("playlist_count") or job.playlist_count or 1
+            if info.get("title"):
+                job.current_video_title = info.get("title")
+
         if d["status"] == "downloading":
             total = d.get("total_bytes") or d.get("total_bytes_estimate")
             downloaded = d.get("downloaded_bytes", 0)
             if total and total > 0:
-                job.progress = round(min(100.0, max(0.0, (downloaded / total) * 100)), 1)
+                single_progress = min(100.0, max(0.0, (downloaded / total) * 100))
+                if job.is_playlist and job.playlist_count > 0:
+                    overall = ((max(0, job.playlist_index - 1) + (single_progress / 100.0)) / job.playlist_count) * 100.0
+                    job.progress = round(min(99.0, max(0.0, overall)), 1)
+                else:
+                    job.progress = round(single_progress, 1)
         elif d["status"] == "finished":
             job.status = "converting"
-            job.progress = 99.0
+            if not job.is_playlist:
+                job.progress = 99.0
 
     outtmpl_pattern = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
     options: Dict[str, Any] = {
         "outtmpl": outtmpl_pattern,
         "progress_hooks": [hook],
-        "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
+        "ignoreerrors": True,
         "js_runtimes": {"node": {}, "deno": {}},
-        "format_sort": ["res", "fps", "vbr"]
+        "format_sort": ["res", "fps", "vbr"],
+        # Resumable Download Strategy (Native yt-dlp resume & partial file protection)
+        "continuedl": True,
+        "part": True,
+        "retries": 10,
+        "fragment_retries": 10,
+        "file_access_retries": 5,
+        # Performance & Network Optimization (Parallel fragments, chunked I/O)
+        "concurrent_fragment_downloads": 3,
+        "http_chunk_size": 10485760,
+        "buffersize": 1024 * 64,
+        "socket_timeout": 30,
     }
 
     import shutil

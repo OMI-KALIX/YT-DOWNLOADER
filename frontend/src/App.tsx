@@ -12,6 +12,10 @@ interface Job {
   format?: string;
   quality?: string;
   has_file?: boolean;
+  is_playlist?: boolean;
+  playlist_index?: number;
+  playlist_count?: number;
+  current_video_title?: string;
 }
 
 interface ProbeData {
@@ -21,6 +25,8 @@ interface ProbeData {
   channel: string;
   qualities: number[];
   is_too_long: boolean;
+  is_playlist?: boolean;
+  playlist_count?: number;
 }
 
 export default function App() {
@@ -220,8 +226,10 @@ export default function App() {
                 <h3 className="text-xs font-semibold text-neutral-200 line-clamp-1">
                   {probeData.title}
                 </h3>
-                <p className="text-xs text-neutral-400">
-                  {probeData.channel} • {formatDuration(probeData.duration)}
+                <p className="text-xs text-neutral-400 flex items-center gap-1.5">
+                  <span>{probeData.channel}</span>
+                  <span>•</span>
+                  <span>{probeData.is_playlist ? `Playlist (${probeData.playlist_count} videos)` : formatDuration(probeData.duration)}</span>
                 </p>
                 {probeData.is_too_long && (
                   <p className="text-[11px] text-amber-400 flex items-center gap-1">

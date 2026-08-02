@@ -72,6 +72,24 @@ def probe_video(url: str, _retry: bool = False) -> Optional[Dict[str, Any]]:
             if not info:
                 return None
 
+            # Playlist detection
+            if info.get("_type") == "playlist" or "entries" in info:
+                raw_entries = info.get("entries", [])
+                entries = [e for e in raw_entries if e]
+                first_entry = entries[0] if entries else {}
+                title = info.get("title") or "YouTube Playlist"
+                total_duration = sum((e.get("duration", 0) or 0) for e in entries)
+                return {
+                    "title": title,
+                    "duration": total_duration,
+                    "thumbnail": first_entry.get("thumbnail") or info.get("thumbnail") or "",
+                    "channel": info.get("uploader") or info.get("channel") or "Playlist",
+                    "qualities": [2160, 1440, 1080, 720, 480, 360],
+                    "is_too_long": False,
+                    "is_playlist": True,
+                    "playlist_count": len(entries)
+                }
+
             duration = info.get("duration", 0) or 0
             
             # Gather available video heights
@@ -90,7 +108,9 @@ def probe_video(url: str, _retry: bool = False) -> Optional[Dict[str, Any]]:
                 "thumbnail": info.get("thumbnail") or info.get("thumbnails", [{}])[-1].get("url", ""),
                 "channel": info.get("uploader") or info.get("channel") or "Unknown Creator",
                 "qualities": qualities,
-                "is_too_long": duration > (30 * 60)
+                "is_too_long": duration > (30 * 60),
+                "is_playlist": False,
+                "playlist_count": 1
             }
     except Exception as e:
         msg = str(e)
