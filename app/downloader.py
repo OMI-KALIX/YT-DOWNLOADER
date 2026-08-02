@@ -95,6 +95,19 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
             options["format"] = f"bestvideo[height<={quality}]+bestaudio/best"
         options["merge_output_format"] = "mp4"
 
+    import logging
+    import json
+
+    logger = logging.getLogger("ytdlp_debug")
+    logging.basicConfig(level=logging.INFO)
+
+    options["verbose"] = True
+    options["logger"] = logger
+
+    safe_options = {k: v for k, v in options.items() if k not in ("cookiefile",)}
+    safe_options["cookiefile_present"] = bool(options.get("cookiefile"))
+    logger.info("yt-dlp options: %s", json.dumps(safe_options, default=str))
+
     probe_opts = {k: v for k, v in options.items() if k not in ("progress_hooks", "outtmpl", "format", "postprocessors", "merge_output_format", "postprocessor_args")}
 
     try:
