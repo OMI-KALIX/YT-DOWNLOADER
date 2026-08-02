@@ -53,6 +53,10 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
             options["cookiefile"] = path
             break
 
+    ffmpeg_loc = os.environ.get("FFMPEG_LOCATION")
+    if ffmpeg_loc:
+        options["ffmpeg_location"] = ffmpeg_loc
+
     if format_choice == "mp3":
         options["format"] = f"bestaudio[abr<={bitrate}]/bestaudio/best"
         options["postprocessors"] = [{
@@ -61,8 +65,8 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
             "preferredquality": bitrate,
         }]
     else:
-        # For mp4 / video formats
-        options["format"] = f"bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={quality}]+bestaudio/best"
+        # Match user's format selection logic: bestvideo[height<=quality]+bestaudio/best merged to mp4
+        options["format"] = f"bestvideo[height<={quality}]+bestaudio/best"
         options["merge_output_format"] = "mp4"
 
     probe_opts = {k: v for k, v in options.items() if k not in ("progress_hooks", "outtmpl", "format", "postprocessors", "merge_output_format")}
