@@ -29,7 +29,7 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "web"]
+                "player_client": ["mweb", "android_vr", "web_embedded", "android", "web"]
             }
         }
     }

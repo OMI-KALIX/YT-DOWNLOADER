@@ -73,7 +73,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "web"]
+                "player_client": ["mweb", "android_vr", "web_embedded", "android", "web"]
             }
         },
         # Resumable Download Strategy (Native yt-dlp resume & partial file protection)
