@@ -74,7 +74,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "format_sort": ["res", "fps", "vbr"],
         "extractor_args": {
             "youtube": {
-                "player_client": ["web_safari", "mweb", "android_vr", "web_embedded", "android", "web"]
+                "player_client": ["android_vr", "web_safari", "web_embedded"]
             }
         },
         # Resumable Download Strategy (Native yt-dlp resume & partial file protection)
@@ -142,7 +142,7 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         options["ffmpeg_location"] = ffmpeg_loc
 
     if format_choice == "mp3":
-        options["format"] = "bestaudio/best"
+        options["format"] = f"bestaudio[abr<={bitrate}]/bestaudio/best"
         options["postprocessors"] = [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -152,63 +152,62 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
             "ffmpeg": ["-threads", "2"]
         }
     else:
-        # High resolution format selection (4K/2K/1080p/720p) merged into MP4 container
+        # Layered format selection (exact height -> best height fallback -> best)
         if quality == "best" or quality == "2160":
             options["format"] = "bestvideo+bestaudio/best"
         else:
-            options["format"] = f"bestvideo[height<={quality}]+bestaudio/bestvideo+bestaudio/best"
+            options["format"] = (
+                f"bestvideo[height<={quality}]+bestaudio/"
+                f"best[height<={quality}]/"
+                f"best"
+            )
         options["merge_output_format"] = "mp4"
         options["postprocessor_args"] = {
             "ffmpeg": ["-threads", "2", "-movflags", "+faststart"]
         }
 
-    probe_opts = {k: v for k, v in options.items() if k not in ("progress_hooks", "outtmpl", "format", "postprocessors", "merge_output_format", "postprocessor_args")}
+    client_attempts = [None]  # None = default options["extractor_args"]
+    if options.get("cookiefile"):
+        client_attempts.append(["tv"])
 
-    try:
-        # Pre-check info for duration limit
-        with YoutubeDL(probe_opts) as probe_ydl:
-            info_meta = probe_ydl.extract_info(url, download=False)
-            if info_meta:
-                duration = info_meta.get("duration", 0) or 0
-                job.title = info_meta.get("title") or "video"
-                job.duration = duration
-                if duration > MAX_DURATION_SECONDS:
-                    job.status = "error"
-                    job.error = "Video duration exceeds maximum 30 minute limit for free tier."
-                    return
+    last_error = None
+    for clients in client_attempts:
+        attempt_options = dict(options)
+        if clients:
+            attempt_options["extractor_args"] = {"youtube": {"player_client": clients}}
 
-        with YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-            
-            if format_choice == "mp3":
-                base, _ = os.path.splitext(filename)
-                filename = base + ".mp3"
-            elif not os.path.exists(filename):
-                # If merged into mp4
-                base, _ = os.path.splitext(filename)
-                if os.path.exists(base + ".mp4"):
-                    filename = base + ".mp4"
+        try:
+            with YoutubeDL(attempt_options) as ydl:
+                info = ydl.extract_info(url, download=True)
+                if not info:
+                    continue
+                filename = ydl.prepare_filename(info)
+                
+                if format_choice == "mp3":
+                    base, _ = os.path.splitext(filename)
+                    filename = base + ".mp3"
+                elif not os.path.exists(filename):
+                    base, _ = os.path.splitext(filename)
+                    if os.path.exists(base + ".mp4"):
+                        filename = base + ".mp4"
 
-            if os.path.exists(filename):
-                job.filepath = filename
-                job.status = "done"
-                job.progress = 100.0
-            else:
-                # Search directory for file matching job_id
-                matched = [os.path.join(DOWNLOAD_DIR, f) for f in os.listdir(DOWNLOAD_DIR) if f.startswith(job_id)]
-                if matched:
-                    job.filepath = matched[0]
+                if os.path.exists(filename):
+                    job.filepath = filename
                     job.status = "done"
                     job.progress = 100.0
+                    return
                 else:
-                    job.status = "error"
-                    job.error = "Output file not found after processing."
+                    matched = [os.path.join(DOWNLOAD_DIR, f) for f in os.listdir(DOWNLOAD_DIR) if f.startswith(job_id)]
+                    if matched:
+                        job.filepath = matched[0]
+                        job.status = "done"
+                        job.progress = 100.0
+                        return
+                    else:
+                        raise RuntimeError("Downloaded file not found on disk.")
+        except Exception as e:
+            last_error = e
+            continue
 
-    except Exception as e:
-        msg = str(e)
-        if ("Sign in to confirm" in msg or "not a bot" in msg or "BotGuard" in msg) and not _retry:
-            time.sleep(3)
-            return run_download(job_id, url, format_choice, quality, bitrate, _retry=True)
-        job.status = "error"
-        job.error = friendly_error(msg)
+    job.status = "error"
+    job.error = friendly_error(str(last_error), job_id)
