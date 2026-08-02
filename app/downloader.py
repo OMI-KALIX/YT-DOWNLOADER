@@ -65,6 +65,11 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         "ignoreerrors": True,
         "js_runtimes": {"node": {}, "deno": {}},
         "format_sort": ["res", "fps", "vbr"],
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
+            }
+        },
         # Resumable Download Strategy (Native yt-dlp resume & partial file protection)
         "continuedl": True,
         "part": True,

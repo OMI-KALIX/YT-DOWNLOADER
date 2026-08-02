@@ -27,7 +27,12 @@ def get_yt_dlp_options() -> Dict[str, Any]:
         "no_warnings": True,
         "skip_download": True,
         "js_runtimes": {"node": {}, "deno": {}},
-        "format_sort": ["res", "fps", "vbr"]
+        "format_sort": ["res", "fps", "vbr"],
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
+            }
+        }
     }
 
     import shutil
