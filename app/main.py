@@ -49,41 +49,6 @@ class DownloadRequest(BaseModel):
     quality: str = "720"      # 1080 | 720 | 480 | 360
     bitrate: str = "192"      # 320 | 256 | 192 | 128
 
-import subprocess
-import sys
-import platform
-
-def environment_fingerprint():
-    def sh(cmd):
-        try:
-            return subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10).stdout.strip()
-        except Exception as e:
-            return f"ERROR: {e}"
-
-    cookies_env = os.environ.get("COOKIES_FILE")
-    return {
-        "python_version": sys.version,
-        "platform": platform.platform() if hasattr(platform, "platform") else sys.platform,
-        "cwd": os.getcwd(),
-        "user": sh("whoami"),
-        "uid_gid": sh("id"),
-        "yt_dlp_version": sh("yt-dlp --version"),
-        "ffmpeg_version": sh("ffmpeg -version | head -n1"),
-        "deno_version": sh("deno --version"),
-        "outbound_ip": sh("curl -s https://api.ipify.org"),
-        "dns_resolve_youtube": sh("getent hosts www.youtube.com"),
-        "cookies_file_env": cookies_env,
-        "cookies_file_abs_path": os.path.abspath(cookies_env) if cookies_env else None,
-        "cookies_file_exists": os.path.exists(cookies_env) if cookies_env else False,
-        "cookies_file_readable": os.access(cookies_env, os.R_OK) if cookies_env else False,
-        "cookies_file_size_bytes": os.path.getsize(cookies_env) if cookies_env and os.path.exists(cookies_env) else None,
-        "cookies_file_perms": oct(os.stat(cookies_env).st_mode)[-3:] if cookies_env and os.path.exists(cookies_env) else None,
-    }
-
-@app.get("/debug/env")
-def debug_env():
-    return environment_fingerprint()
-
 @app.get("/healthz")
 def healthz():
     cookies_env = os.environ.get("COOKIES_FILE", "")
