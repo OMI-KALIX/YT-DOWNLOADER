@@ -1,2 +1,5 @@
-Flask
-yt-dlp
+fastapi
+uvicorn[standard]
+yt-dlp[default,curl-cffi]
+python-multipart
+pydantic

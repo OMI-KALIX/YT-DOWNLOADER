@@ -1,110 +1,102 @@
-# 🎬 YouTube Video Downloader Web App
+# 🎬 Media Service — FastAPI + ffmpeg (Render Free Tier)
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.3-green?logo=flask\&logoColor=white)](https://flask.palletsprojects.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
 [![yt-dlp](https://img.shields.io/badge/yt--dlp-latest-orange)](https://github.com/yt-dlp/yt-dlp)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Render](https://img.shields.io/badge/Render-Free%20Tier-46E3B7?logo=render)](https://render.com/)
 
-> A sleek, holographic‑styled web interface to download YouTube videos and audio using Flask & yt-dlp.
+> Lightweight, high-performance media downloader built with FastAPI, Vite + React, and ffmpeg. Specifically engineered to survive Render's free tier constraints (512MB RAM, ephemeral filesystem, spin-down idle limits).
 
 ---
 
-## 🛠️ Features
+## 🛠️ Architecture & Constraints
 
-* ▶️ **Video & Audio Download**: Download YouTube videos (MP4) or extract audio (MP3).
-* ⚙️ **Quality Control**: Choose video resolution (144p–1080p) or audio bitrate (192k–320k).
-* 📃 **Playlist & Batch Support**: Easily extendable for playlists (YT-DLP backing).
-* 📂 **Custom Output Folder**: All downloads saved under the `downloads/` directory.
-* 🔄 **Progress Handling**: Visual progress in terminal; robust error handling.
-* 🌐 **Responsive UI**: Futuristic CSS animation & mobile‑friendly design.
+```
+┌─────────────────────────────────────────────┐
+│              Render Web Service               │
+│  ┌───────────────────────────────────────┐   │
+│  │   FastAPI app (uvicorn)                │   │
+│  │   - serves API (/api/*)                │   │
+│  │   - serves built frontend (static/)    │   │
+│  │   - in-memory job dictionary           │   │
+│  │   - BackgroundTasks (yt-dlp + ffmpeg)  │   │
+│  └───────────────────────────────────────┘   │
+│  ffmpeg installed at OS level in Docker image│
+│  /tmp used for ephemeral download storage     │
+└─────────────────────────────────────────────┘
+```
+
+- **512MB RAM Friendly**: In-memory job state without Redis, Celery, or ORM overhead.
+- **Ephemeral Storage**: Files are saved temporarily and automatically deleted immediately after being streamed to the user.
+- **Duration Protection**: Videos exceeding 30 minutes are automatically guarded to prevent RAM/CPU exhaust.
+- **Single Container**: Multi-stage Docker build compiles the TSX frontend and packages it with Python + ffmpeg into a single image.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-video_downloader_flask/
-├── app.py               # Flask application logic (download endpoint)
-├── requirements.txt     # Python dependencies
-├── templates/
-│   └── index.html       # Main UI template
-├── static/
-│   ├── style.css        # Holographic styling and animations
-└── downloads/           # Auto-created output folder for downloads
+.
+├── app/
+│   ├── main.py          # FastAPI application & route endpoints
+│   ├── jobs.py          # In-memory job state dataclass & dictionary
+│   ├── downloader.py    # yt-dlp + ffmpeg download & post-processing worker
+│   └── probe.py         # Metadata probing & host allowlist validation
+├── frontend/            # Vite + React + TypeScript + Tailwind CSS UI
+│   ├── src/
+│   │   ├── App.tsx      # Dark dashboard UI & polling logic
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
+├── Dockerfile           # Multi-stage Docker build (Node -> Python + ffmpeg)
+├── render.yaml          # Render service deployment blueprint
+├── requirements.txt     # Backend dependencies
+└── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## 💻 Local Development
 
-### 🔧 Prerequisites
+### 1. Backend
 
-* Python 3.11+
-* `pip`
-* `ffmpeg` installed and in your PATH (or update `ffmpeg_location` in `app.py`)
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
 
-### ⬇️ Installation
+# Start FastAPI Uvicorn dev server
+uvicorn app.main:app --reload --port 8000
+```
 
-1. **Clone the repo**:
+### 2. Frontend
 
-   ```bash
-   git clone https://github.com/your-username/video_downloader_flask.git
-   cd video_downloader_flask
-   ```
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-2. **Install dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Ensure `ffmpeg`** is available (or adjust `ffmpeg_location` in `app.py`).
+Open `http://localhost:3000` in your browser.
 
 ---
 
-## 💻 Running the App
+## 🚀 Deploying to Render
 
-1. **Start the Flask server**:
+1. Push your repository to GitHub.
+2. Log into [Render Dashboard](https://dashboard.render.com/) and click **New +** -> **Blueprint**.
+3. Connect your repository (`render.yaml` will be auto-detected).
+4. Click **Apply**.
 
-   ```bash
-   python app.py
-   ```
-
-2. **Open in browser**:
-
-   Navigate to `http://127.0.0.1:5000/` to access the UI.
-
-3. **Enter a YouTube URL**, select format (MP4 or MP3), choose quality or bitrate, then click **Download**.
+Render will build the Docker container and deploy the service on the free tier.
 
 ---
 
-## 🚩 Configuration Options
+## 🛡️ License & Educational Notice
 
-| Flag              | Description                                | Default            |
-| ----------------- | ------------------------------------------ | ------------------ |
-| `--url`           | YouTube video URL                          | (required)         |
-| `--format`        | `mp4` or `mp3`                             | `mp4`              |
-| `--quality`       | Video height (e.g., `720`, `1080`, `best`) | `best`             |
-| `--audio_bitrate` | Audio bitrate in kbps (`192`,`256`,`320`)  | `192` (selectable) |
+Distributed under the **MIT License**.
 
-*Note: These map to form fields in the web UI.*
-
----
-
-## 🛡️ License
-
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
-
----
-
-## 👤 Author
-
-**OMKAR SAWANT**
-
-[![GitHub](https://img.shields.io/badge/GitHub-Profile-blue?logo=github)](https://github.com/OMI-KALIX)
-
+> **Educational Purpose Only**: This tool is designed strictly for educational purposes. Please respect copyright laws and content creators' rights.
 
 Made with ❤️ by OMI-KALIX.
-
-> Feel free to contribute! Pull requests and issues are welcome.
->#This project only for Educational purpose
