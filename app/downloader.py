@@ -129,11 +129,6 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
     if ffmpeg_loc:
         options["ffmpeg_location"] = ffmpeg_loc
 
-    # FFmpeg Optimization: cap threads to 2 (prevents RAM/CPU exhaustion) & add +faststart for instant progressive web playback
-    options["postprocessor_args"] = {
-        "ffmpeg": ["-threads", "2", "-movflags", "+faststart"]
-    }
-
     if format_choice == "mp3":
         options["format"] = f"bestaudio[abr<={bitrate}]/bestaudio/best"
         options["postprocessors"] = [{
@@ -141,6 +136,9 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
             "preferredcodec": "mp3",
             "preferredquality": bitrate,
         }]
+        options["postprocessor_args"] = {
+            "ffmpeg": ["-threads", "2"]
+        }
     else:
         # High resolution format selection (4K/2K/1080p/720p) merged into MP4 container
         if quality == "best" or quality == "2160":
@@ -148,6 +146,9 @@ def run_download(job_id: str, url: str, format_choice: str, quality: str, bitrat
         else:
             options["format"] = f"bestvideo[height<={quality}]+bestaudio/best"
         options["merge_output_format"] = "mp4"
+        options["postprocessor_args"] = {
+            "ffmpeg": ["-threads", "2", "-movflags", "+faststart"]
+        }
 
     probe_opts = {k: v for k, v in options.items() if k not in ("progress_hooks", "outtmpl", "format", "postprocessors", "merge_output_format", "postprocessor_args")}
 
